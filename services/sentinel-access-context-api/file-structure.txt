@@ -1,0 +1,109 @@
+ruckshuck-sentinel/
+  README.md
+  .gitignore
+  .editorconfig
+
+  docs/
+    architecture.md
+    mvp-scope.md
+    security-notes.md
+
+  infra/
+    docker-compose.yml
+    env.example
+    scripts/
+      dev-up.sh
+      dev-down.sh
+
+  services/
+    sentinel-access-context-api/
+      README.md
+      pyproject.toml            # or requirements.txt (pick one)
+      .env.example
+      Dockerfile
+
+      app/
+        main.py                  # FastAPI entrypoint
+        api/
+          v1/
+            routes/
+              health.py
+              jobs.py            # create job, get status
+              events.py          # list enriched events (paginated)
+            deps.py              # auth deps, request context
+          middleware/
+            request_id.py        # correlation IDs
+            error_handler.py     # consistent error responses
+          schemas/
+            requests.py          # Pydantic request models
+            responses.py         # Pydantic response models
+
+        core/
+          config.py              # settings + env loading
+          logging.py             # structured logging setup
+          security.py            # api key / jwt helpers (MVP: API key)
+
+        domain/
+          models/
+            access_event.py      # normalized access/login event
+            geo_context.py       # vpn/proxy/city/region/country/asn etc.
+            job.py               # job model/status enums
+          services/
+            access_context_pipeline.py  # YOUR refactored pipeline
+            normalization.py      # raw -> normalized
+            enrichment.py         # geo/vpn/proxy/asn lookup + caching
+            validation.py         # input validation (date range, SA JSON shape)
+          connectors/
+            google_workspace.py   # fetch login events (pagination/retries)
+            ip_context.py         # VPN/geo provider client
+          rules/
+            heuristics.py         # optional: "new country" flags etc. (later)
+
+        persistence/
+          db.py                  # SQLAlchemy / sqlite init
+          repositories/
+            jobs_repo.py
+            events_repo.py
+            ip_cache_repo.py     # optional
+          migrations/            # alembic (optional, can add later)
+
+        workers/
+          runner.py              # background worker loop (optional)
+          tasks.py               # job execution function
+
+        tests/
+          test_pipeline.py
+          test_connectors.py
+
+      scripts/
+        run_local.py             # dev run
+        seed_demo.py             # generate demo data (optional)
+
+    sentinel-web-ui/
+      README.md
+      package.json
+      astro.config.mjs
+      tailwind.config.cjs
+      .env.example
+      Dockerfile
+
+      src/
+        pages/
+          index.astro            # landing / login
+          dashboard.astro        # table view
+          job/[id].astro         # job results view
+        components/
+          LoginForm.astro
+          DateRangePicker.astro
+          EventsTable.astro
+          FiltersBar.astro
+          StatusBadge.astro
+        lib/
+          api.ts                 # calls to access-context-api
+          types.ts               # types mirroring API responses
+          format.ts              # formatting helpers
+        styles/
+          global.css
+
+      public/
+        favicon.svg

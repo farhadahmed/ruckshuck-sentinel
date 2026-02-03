@@ -1,0 +1,47 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+
+# === Virtual Environment ===
+# Ignore the entire venv folder (even though venv itself contains a .gitignore)
+.venv/
+env/
+venv/
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+
+# === IDE ===
+.vscode/
+.idea/
+
+# === File Outputs & Logs ===
+*.log
+logins.csv
+vpnapi_results.csv
+logins_enriched.csv
+
+# === Secrets & Keys ===
+.env
+
+# === Build artifacts ===
+dist/
+build/
+*.spec
+
+# === Temporary files ===
+*.tmp
+*.bak
+*.swp
+
+# === Testing ===
+.pytest_cache/
+.coverage
+htmlcov/

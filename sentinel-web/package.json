@@ -1,0 +1,28 @@
+{
+  "name": "sentinel-web",
+  "version": "0.1.0",
+  "description": "Sentinel Web - AI-assisted SOC platform client",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "lint": "eslint src/",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "astro": "^5.15.8",
+    "@astrojs/tailwind": "^5.0.0",
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

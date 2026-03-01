@@ -1,0 +1,42 @@
+# === OS Files ===
+.DS_Store
+Thumbs.db
+
+# === IDE ===
+.vscode/
+.idea/
+
+# === File Outputs & Logs ===
+*.log
+
+# === Secrets & Keys ===
+.env
+
+# === Build artifacts ===
+dist/
+build/
+*.spec
+
+# === Temporary files ===
+*.tmp
+*.bak
+*.swp
+
+# === Node / Astro ===
+node_modules/
+.cache/
+.parcel-cache/
+.astro/
+
+# === npm / yarn logs ===
+npm-debug.log*
+yarn-error.log
+
+# === Coverage / nyc (JS) ===
+coverage/
+.nyc_output/
+
+# === Env files ===
+.env.local
+.env.*
+!.env.example

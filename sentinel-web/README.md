@@ -63,10 +63,10 @@ Sentinel Web communicates with backend services over HTTPS APIs.
 
 Typical flow:
 1. User logs into Sentinel Web
-2. User enters platform configuration (e.g., Google service account JSON + date range)
-3. Sentinel Web sends a request to `sentinel-access-context-api`
-4. Backend processes the request and returns enriched access context data
-5. Sentinel Web renders results in a dashboard table
+2. User enters their Google service account JSON, delegated admin email, and date range into the Access Context form on the dashboard
+3. Sentinel Web's `/api/access-context` proxy route validates the session and forwards the request to `sentinel-access-context-api`
+4. Backend fetches login events, enriches IPs with geolocation and VPN/proxy intelligence, and returns the results
+5. Sentinel Web renders the enriched events in a data table with visual indicators for suspicious activity and security flags
 
 ### Future Integrations
 
@@ -126,12 +126,12 @@ The application will be available at `http://localhost:3000`.
 1. **Sign up:** Navigate to `/signup` and create a test account.
 2. **Login:** Use your credentials to log in on `/login`.
 3. **Dashboard:** Once authenticated, you'll see the dashboard at `/dashboard`.
-4. **Test API Integration:** Click "Fetch Sample Data" to call `http://localhost:8000/api/sample-data` from the sentinel-access-context-api service.
+4. **Test API Integration:** Ensure `sentinel-access-context-api` is running on `localhost:8000`. Fill in the Access Context form with a Google service account JSON, delegated admin email, and date range, then click "Run Access Context". Results will appear in the table below the form.
 
 ### Notes on Local Testing
 
 - **Authentication:** Sessions are stored in-memory (MVP). Restarting the server will clear all sessions.
-- **CORS:** Ensure sentinel-access-context-api (running on localhost:8000) allows requests from `http://localhost:3000`.
+- **Backend proxy:** API requests to `sentinel-access-context-api` are proxied through the Astro server (`/api/access-context`), so there are no CORS concerns. The backend does not need to be publicly accessible.
 - **Secure cookies:** In development, cookies are not marked `Secure` (to work over HTTP). In production, HTTPS is required.
 
 ### Project Structure
@@ -142,6 +142,7 @@ src/
 │   └── auth.ts              # Session management & password hashing
 ├── pages/
 │   ├── api/
+│   │   ├── access-context.ts # POST /api/access-context (proxy to backend)
 │   │   ├── login.ts         # POST /api/login
 │   │   ├── signup.ts        # POST /api/signup
 │   │   ├── me.ts            # GET /api/me (auth check)
@@ -149,7 +150,7 @@ src/
 │   ├── index.astro          # Home page
 │   ├── login.astro          # Login form
 │   ├── signup.astro         # Signup form
-│   └── dashboard.astro      # Protected dashboard
+│   └── dashboard.astro      # Protected dashboard (form + results table)
 ├── layouts/
 │   └── BaseLayout.astro     # HTML wrapper
 └── styles/
@@ -178,6 +179,7 @@ src/
   - `POST /api/login` — Authenticate and establish session
   - `GET /api/me` — Check current session validity
   - `POST /api/logout` — Destroy session
+  - `POST /api/access-context` — Session-gated proxy to sentinel-access-context-api
 
 ### Protected Routes
 

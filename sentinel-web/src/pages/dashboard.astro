@@ -51,39 +51,84 @@ if (!user || apiError) {
 
     <!-- Main Content -->
     <main class="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Access Context</h2>
-          <p class="text-gray-600 text-sm mb-4">
-            Search Google Workspace login events and enriched access context data.
-          </p>
-          <button
-            id="fetchDataBtn"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-          >
-            Fetch Sample Data
-          </button>
-        </div>
+      <!-- Access Context Form -->
+      <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Access Context</h2>
+        <p class="text-gray-600 text-sm mb-6">
+          Provide your Google Workspace service account credentials to fetch and enrich login events.
+        </p>
 
-        <div class="bg-white rounded-lg shadow p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Platform Configuration</h2>
-          <p class="text-gray-600 text-sm mb-4">
-            Configure your security data sources and integrations.
-          </p>
+        <form id="accessContextForm" class="space-y-4">
+          <div>
+            <label for="serviceAccountJson" class="block text-sm font-medium text-gray-700 mb-1">
+              Service Account JSON
+            </label>
+            <textarea
+              id="serviceAccountJson"
+              name="serviceAccountJson"
+              required
+              rows="6"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none font-mono text-sm"
+              placeholder='Paste your GCP service account key JSON here...'
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="delegatedAdminEmail" class="block text-sm font-medium text-gray-700 mb-1">
+              Delegated Admin Email
+            </label>
+            <input
+              type="email"
+              id="delegatedAdminEmail"
+              name="delegatedAdminEmail"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              placeholder="admin@company.com"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                id="startDate"
+                name="startDate"
+                required
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              />
+            </div>
+            <div>
+              <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">
+                End Date <span class="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="date"
+                id="endDate"
+                name="endDate"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              />
+            </div>
+          </div>
+
+          <div id="formError" class="hidden p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+
           <button
-            disabled
-            class="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed"
+            type="submit"
+            class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
           >
-            Coming Soon
+            Run Access Context
           </button>
-        </div>
+        </form>
       </div>
 
       <!-- Data Display Area -->
       <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Data</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Results</h2>
         <div id="dataContainer" class="text-gray-600 text-sm">
-          Click "Fetch Sample Data" to load data from sentinel-access-context-api.
+          Submit the form above to fetch enriched login event data.
         </div>
       </div>
     </main>
@@ -91,8 +136,8 @@ if (!user || apiError) {
 
   <script>
     const logoutBtn = document.getElementById('logoutBtn') as HTMLButtonElement | null;
-    const fetchDataBtn = document.getElementById('fetchDataBtn') as HTMLButtonElement | null;
-    const dataContainer = document.getElementById('dataContainer') as HTMLDivElement | null;
+    const form = document.getElementById('accessContextForm') as HTMLFormElement | null;
+    const errorDiv = document.getElementById('formError') as HTMLDivElement | null;
 
     logoutBtn?.addEventListener('click', async () => {
       try {
@@ -106,25 +151,64 @@ if (!user || apiError) {
       }
     });
 
-    fetchDataBtn?.addEventListener('click', async () => {
-      if (!fetchDataBtn || !dataContainer) return;
-      
-      fetchDataBtn.disabled = true;
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!errorDiv) return;
+      errorDiv.classList.add('hidden');
+
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      const serviceAccountRaw = (document.getElementById('serviceAccountJson') as HTMLTextAreaElement).value.trim();
+      const delegatedAdminEmail = (document.getElementById('delegatedAdminEmail') as HTMLInputElement).value.trim();
+      const startDate = (document.getElementById('startDate') as HTMLInputElement).value;
+      const endDate = (document.getElementById('endDate') as HTMLInputElement).value;
+
+      // Validate and parse the service account JSON
+      let serviceAccountJson: object;
+      try {
+        serviceAccountJson = JSON.parse(serviceAccountRaw);
+      } catch {
+        errorDiv.textContent = 'Invalid JSON in Service Account field. Please paste valid JSON.';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+
+      const payload: Record<string, unknown> = {
+        service_account_json: serviceAccountJson,
+        delegated_admin_email: delegatedAdminEmail,
+        start_date: `${startDate}T00:00:00Z`,
+      };
+
+      if (endDate) {
+        payload.end_date = `${endDate}T23:59:59Z`;
+      }
+
+      submitBtn.disabled = true;
+      const dataContainer = document.getElementById('dataContainer') as HTMLDivElement;
       dataContainer.innerHTML = '<p class="text-gray-500">Loading...</p>';
 
       try {
-        // Call sentinel-access-context-api on localhost:8000
-        const response = await fetch('http://localhost:8000/api/sample-data');
-        if (!response.ok) {
-          throw new Error('Failed to fetch data from API');
-        }
+        const response = await fetch('/api/access-context', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          credentials: 'include',
+        });
+
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Request failed');
+        }
+
+        console.log('Access Context response:', data);
         dataContainer.innerHTML = `<pre class="bg-gray-100 p-4 rounded overflow-auto text-xs">${JSON.stringify(data, null, 2)}</pre>`;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'An error occurred';
-        dataContainer.innerHTML = `<p class="text-red-600">${message}</p>`;
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+        dataContainer.innerHTML = '<p class="text-gray-600 text-sm">Submit the form above to fetch enriched login event data.</p>';
       } finally {
-        fetchDataBtn.disabled = false;
+        submitBtn.disabled = false;
       }
     });
   </script>

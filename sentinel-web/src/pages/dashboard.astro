@@ -139,6 +139,21 @@ if (!user || apiError) {
     const form = document.getElementById('accessContextForm') as HTMLFormElement | null;
     const errorDiv = document.getElementById('formError') as HTMLDivElement | null;
 
+    /**
+     * Escapes HTML special characters to prevent XSS when injecting
+     * backend data into the DOM via innerHTML. All string values from
+     * the access context API response must pass through this function
+     * before being rendered in the results table.
+     */
+    function escapeHtml(str: string): string {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function renderResultsTable(rows: Record<string, unknown>[], container: HTMLDivElement) {
       if (!rows || rows.length === 0) {
         container.innerHTML = '<p class="text-gray-500">No login events found for the specified date range.</p>';
@@ -191,12 +206,12 @@ if (!user || apiError) {
               // Timestamp formatting
               if (col.key === 'timestamp' && typeof value === 'string') {
                 const date = new Date(value);
-                const formatted = date.toLocaleString();
+                const formatted = escapeHtml(date.toLocaleString());
                 return `<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">${formatted}</td>`;
               }
 
               // Default
-              const display = value !== null && value !== undefined ? String(value) : '-';
+              const display = value !== null && value !== undefined ? escapeHtml(String(value)) : '-';
               return `<td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">${display}</td>`;
             })
             .join('');
